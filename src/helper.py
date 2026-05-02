@@ -1,0 +1,40 @@
+from git import Repo
+import os
+from langchain.text_splitter import Language
+from langchain.document_loaders.generic import GenericLoader
+from langchain.document_loaders.parsers import LanguageParser
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.embeddings import OpenAIEmbeddings
+
+# Clone the repository
+def repository_clone(repo_url):
+    os.makedirs("repo", exist_ok=True)
+    repo_path= "repo/"
+    Repo.clone_from(repo_url, to_path=repo_path)
+
+# Loading Repository as documents
+def load_repository_as_documents(repo_path):
+    loader =GenericLoader.from_filesystem(
+        repo_path,
+        glob="**/*.*",
+        suffixes=[".py"],
+        parser=LanguageParser(language=Language.PYTHON,parser_threshold=500)
+    )
+    documents = loader.load()
+    return documents
+
+# Creating text chunks
+def text_splitter(documents):
+    documents_splitter = RecursiveCharacterTextSplitter.from_language(
+        language=Language.PYTHON,
+        chunk_size=2000,
+        chunk_overlap=200
+    )
+
+    text_chunks = documents_splitter.split_documents(documents)
+    return text_chunks
+
+# Loading embeddings Model
+def load_embeddings_model():
+    embeddings_model = OpenAIEmbeddings(disallowed_special=())
+    return embeddings_model
