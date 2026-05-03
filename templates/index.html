@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GenAI Repo Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin: auto;
+            padding-top: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #38bdf8;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 6px;
+            border: none;
+            font-size: 14px;
+        }
+
+        input {
+            background: #334155;
+            color: white;
+        }
+
+        button {
+            background: #38bdf8;
+            color: black;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #0ea5e9;
+        }
+
+        #chat-box {
+            height: 350px;
+            overflow-y: auto;
+            background: #020617;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .message {
+            margin: 10px 0;
+        }
+
+        .user {
+            color: #22c55e;
+        }
+
+        .bot {
+            color: #facc15;
+        }
+
+        .loading {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🚀 GitHub Repo Chat (GenAI)</h1>
+
+    <!-- Repo Input -->
+    <div class="card">
+        <h3>🔗 Load GitHub Repository</h3>
+        <input type="text" id="repoUrl" placeholder="Enter GitHub Repo URL..." />
+        <button onclick="loadRepo()">Load Repository</button>
+        <p id="repoStatus"></p>
+    </div>
+
+    <!-- Chat Section -->
+    <div class="card">
+        <h3>💬 Ask Questions</h3>
+
+        <div id="chat-box"></div>
+
+        <input type="text" id="chatInput" placeholder="Ask something about the repo..." />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script>
+    function loadRepo() {
+        let repoUrl = document.getElementById("repoUrl").value;
+        let status = document.getElementById("repoStatus");
+
+        status.innerHTML = "⏳ Cloning & indexing...";
+
+        let formData = new FormData();
+        formData.append("question", repoUrl);
+
+        fetch("/gitRepo", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            status.innerHTML = "✅ Repo Loaded Successfully!";
+        })
+        .catch(err => {
+            status.innerHTML = "❌ Error loading repo";
+        });
+    }
+
+    function sendMessage() {
+        let inputBox = document.getElementById("chatInput");
+        let message = inputBox.value;
+        let chatBox = document.getElementById("chat-box");
+
+        if (!message) return;
+
+        chatBox.innerHTML += `<div class="message user">👤 ${message}</div>`;
+        chatBox.innerHTML += `<div class="message loading">🤖 Thinking...</div>`;
+
+        let formData = new FormData();
+        formData.append("msg", message);
+
+        fetch("/chat", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.text())
+        .then(data => {
+            chatBox.lastChild.remove(); // remove loading
+            chatBox.innerHTML += `<div class="message bot">🤖 ${data}</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        })
+        .catch(err => {
+            chatBox.innerHTML += `<div class="message bot">❌ Error</div>`;
+        });
+
+        inputBox.value = "";
+    }
+</script>
+
+</body>
+</html>
